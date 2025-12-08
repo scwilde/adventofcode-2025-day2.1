@@ -22,13 +22,14 @@ fn splitnum(num: i32, rhs_digits: u32) -> (i32, i32) {
 fn main() -> Result<(), Box<dyn Error>> {
     let args = cli::Args::parse();
 
-    cli::print_if_verbose(&args, "Reading puzzle input...");
+    args.print_if_verbosity(1, "Reading puzzle input...");
     let data = fs::read_to_string(&args.input_path)?;
 
-    let mut invalid_id_total = 0;
+    args.print_if_verbosity(1, "Parsing ID ranges...");
+    let mut invalid_id_sum = 0;
     for range in data.split(",") {
         let mut splitrange = range.split("-");
-        cli::print_if_vverbose(&args, format!("Parsing {}...", range));
+        args.print_if_verbosity(2, format!("Parsing {}...", range));
         let bounds = Bounds {
             lower: splitrange.next()
                 .ok_or(format!("{} not a valid range.", range))?
@@ -37,7 +38,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 .ok_or(format!("{} not a valid range.", range))?
                 .parse().map_err(|err| format!("Problem parsing range {}: {}", range, err))?
         };
-        cli::print_if_vverbose(&args, format!("Parsed to range {}..{}", bounds.lower, bounds.upper));
+        args.print_if_verbosity(2, format!("Parsed to range {}..={}", bounds.lower, bounds.upper));
 
         let mut invalid_id_count = 0;
         for val in bounds.lower..=bounds.upper {
@@ -50,13 +51,17 @@ fn main() -> Result<(), Box<dyn Error>> {
                 _ => {false}
             }{
                 true => {
-                    cli::print_if_vverbose(&args, format!("{} is not a valid ID!", val));
+                    args.print_if_verbosity(3, format!("{} is not a valid ID!", val));
                     invalid_id_count += 1;
-                    invalid_id_total += val;
+                    invalid_id_sum += val;
                 },
-                false => cli::print_if_vverbose(&args, format!("{} is a valid ID!", val))
+                false => args.print_if_verbosity(3, format!("{} is a valid ID!", val))
             }
         }
+        args.print_if_verbosity(2, format!(
+            "{} invalid IDs; Invalid ID sum: {}",
+            invalid_id_count, invalid_id_sum
+        ));
     }
 
     Ok(())

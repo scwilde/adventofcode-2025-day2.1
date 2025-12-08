@@ -5,9 +5,7 @@ use clap::Parser;
 #[derive(Parser)]
 #[command(version, about, long_about=None)]
 pub struct Args {
-    /// -v will print when each task begins.
-    /// -vv will print each operation and its result.
-    /// -vvv will print each operation, its result, and the execution time
+    /// Verbosity level. Valid levels: 1, 2, 3
     #[arg(short, action = clap::ArgAction::Count)]
     pub verbosity: u8,
 
@@ -15,16 +13,10 @@ pub struct Args {
     pub input_path: String
 }
 
-pub fn print_if_verbose<S: AsRef<str>>(args: &Args, msg: S) {
-    if args.verbosity >= 1 {
-        eprintln!("{}", msg.as_ref());
+impl Args {
+    pub fn print_if_verbosity<S: AsRef<str>>(&self, v: u8, msg: S) {
+        if self.verbosity >= v {
+            eprintln!("{}{}", "   ".repeat(v.into()), msg.as_ref());
+        }
     }
 }
-
-pub fn print_if_vverbose<S: AsRef<str>>(args: &Args, msg: S) {
-    if args.verbosity >= 2 {
-        eprintln!("{}", msg.as_ref());
-    }
-}
-
-pub fn time_if_vvverbose() {}
