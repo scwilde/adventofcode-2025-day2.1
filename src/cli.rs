@@ -4,8 +4,8 @@ use clap::Parser;
 /// Counts the number of zeroes while doing a series of modulo arithmetic operations
 #[derive(Parser)]
 #[command(version, about, long_about=None)]
-pub struct Args {
-    /// Verbosity level. Valid levels: 1, 2, 3
+pub struct Cli {
+    /// Logging level to print. -v, -vv, or -vvv for levels 1, 2, or 3
     #[arg(short, action = clap::ArgAction::Count)]
     pub verbosity: u8,
 
@@ -13,10 +13,10 @@ pub struct Args {
     pub input_path: String
 }
 
-impl Args {
-    pub fn print_if_verbosity<S: AsRef<str>>(&self, v: u8, msg: S) {
-        if self.verbosity >= v {
-            eprintln!("{}{}", "   ".repeat(v.into()), msg.as_ref());
+impl Cli {
+    pub fn log<S: AsRef<str>>(&self, level: u8, msg: S) {
+        if self.verbosity >= level {
+            eprintln!("{}{}", "   ".repeat((level-1).into()), msg.as_ref());
         }
     }
 }

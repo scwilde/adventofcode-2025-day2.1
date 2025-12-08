@@ -3,66 +3,58 @@ use std::fs;
 use clap::Parser;
 
 mod cli;
+mod utils;
 
-struct Bounds {
-    lower: i32,
-    upper: i32,
-}
-
-fn count_digits<N>(number: N, base: N) -> i32
-where f64: From<N>
-{ (f64::from(number)).abs().log(f64::from(base)).ceil() as i32 }
-
-fn splitnum(num: i32, rhs_digits: u32) -> (i32, i32) {
-    let rhs = num % i32::pow(10, rhs_digits);
-    let lhs = num / i32::pow(10, rhs_digits);
-    (lhs, rhs)
+fn is_id_valid(id: u64) -> bool{
+    let digit_count = utils::count_digits(id, 10);
+    if digit_count % 2 == 0 {
+        let (lhs, rhs) = utils::splitnum(id, (digit_count/2) as u32);
+        return lhs != rhs;
+    }
+    true
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let args = cli::Args::parse();
+    let cli = cli::Cli::parse();
 
-    args.print_if_verbosity(1, "Reading puzzle input...");
-    let data = fs::read_to_string(&args.input_path)?;
+    cli.log(1, "Reading puzzle input...");
+    let data = fs::read_to_string(&cli.input_path)?;
 
-    args.print_if_verbosity(1, "Parsing ID ranges...");
+    cli.log(1, "Parsing ID ranges...");
+    let mut parsed_range_count = 0;
     let mut invalid_id_sum = 0;
-    for range in data.split(",") {
-        let mut splitrange = range.split("-");
-        args.print_if_verbosity(2, format!("Parsing {}...", range));
-        let bounds = Bounds {
+    for id_range in data.split(",") {
+        let mut splitrange = id_range.split("-");
+        cli.log(2, format!("Parsing {}...", id_range));
+        let id_range = utils::Range {
             lower: splitrange.next()
-                .ok_or(format!("{} not a valid range.", range))?
-                .parse().map_err(|err| format!("Problem parsing range {}: {}", range, err))?,
+                .ok_or(format!("{} not a valid range.", id_range))?
+                .parse().map_err(|err| format!("Problem parsing range {}: {}", id_range, err))?,
             upper: splitrange.next()
-                .ok_or(format!("{} not a valid range.", range))?
-                .parse().map_err(|err| format!("Problem parsing range {}: {}", range, err))?
+                .ok_or(format!("{} not a valid range.", id_range))?
+                .parse().map_err(|err| format!("Problem parsing range {}: {}", id_range, err))?
         };
-        args.print_if_verbosity(2, format!("Parsed to range {}..={}", bounds.lower, bounds.upper));
-
+        
+        cli.log(2, format!("Searching range {}..={}...", id_range.lower, id_range.upper));
         let mut invalid_id_count = 0;
-        for val in bounds.lower..=bounds.upper {
-            let digits = count_digits(val, 10);
-            match match digits % 2 {
-                0 => {
-                    let (lhs, rhs) = splitnum(val, (digits / 2) as u32);
-                    lhs == rhs
-                },
-                _ => {false}
-            }{
-                true => {
-                    args.print_if_verbosity(3, format!("{} is not a valid ID!", val));
+        for id in id_range.lower..=id_range.upper {
+            match is_id_valid(id){
+                false => {
+                    cli.log(3, format!("{} is not a valid ID!", id));
                     invalid_id_count += 1;
-                    invalid_id_sum += val;
+                    invalid_id_sum += id;
                 },
-                false => args.print_if_verbosity(3, format!("{} is a valid ID!", val))
+                true => cli.log(3, format!("{} is a valid ID!", id))
             }
         }
-        args.print_if_verbosity(2, format!(
+        cli.log(2, format!(
             "{} invalid IDs; Invalid ID sum: {}",
             invalid_id_count, invalid_id_sum
         ));
+        parsed_range_count += 1;
     }
 
+    cli.log(1, format!("Parsed {} ID ranges! Invalid ID sum:", parsed_range_count));
+    println!("{}", invalid_id_sum);
     Ok(())
 }
