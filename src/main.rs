@@ -5,13 +5,13 @@ use clap::Parser;
 mod cli;
 mod utils;
 
-fn is_id_valid(id: u64) -> bool{
-    let digit_count = utils::count_digits(id, 10);
+fn is_id_valid(id: u64) -> Result<bool, String>{
+    let digit_count = utils::count_digits(id, 10)?;
     if digit_count % 2 == 0 {
         let (lhs, rhs) = utils::splitnum(id, (digit_count/2) as u32);
-        return lhs != rhs;
+        return Ok(lhs != rhs);
     }
-    true
+    Ok(true)
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -38,7 +38,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         cli.log(2, format!("Searching range {}..={}...", id_range.lower, id_range.upper));
         let mut invalid_id_count = 0;
         for id in id_range.lower..=id_range.upper {
-            match is_id_valid(id){
+            match is_id_valid(id)?{
                 false => {
                     cli.log(3, format!("{} is not a valid ID!", id));
                     invalid_id_count += 1;
